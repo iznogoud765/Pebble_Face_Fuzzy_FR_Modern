@@ -20,12 +20,14 @@
             },
             {
                 "file": "fonts/Domestic_Manners.ttf",
-                "name": "FONT_DOMESTIC_BOLD_SUBSET_48",
+                "name": "FONT_DOMESTIC_BOLD_SUBSET_45",
+                "trackingAdjust": -2,
                 "type": "font"
             },
             {
                 "file": "fonts/Domestic_Manners.ttf",
                 "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
+                "trackingAdjust": -2,
                 "type": "font"
             },
             {

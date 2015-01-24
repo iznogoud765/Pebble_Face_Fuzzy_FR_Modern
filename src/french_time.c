@@ -2,6 +2,7 @@
 
 static const char* STR_HEURE = "heure";
 static const char* STR_H = " h.";
+static const char* STR_H2 = "h. ";
 static const char* STR_MOINS = "moins";
 static const char* STR_M = "- ";
 
@@ -78,14 +79,20 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
 
   if (minutes >= 0 && minutes < 3) {
     if(hours > 0 && hours < 12) {
-        strcat(line2, STR_HEURE);
+      strcat(line2, STR_HEURE);
       if (hours > 1) strcat(line2, "s");
     }
-    if (minutes == 0) strcat(line3, MINS[0]); // pile !
+    if (minutes == 0) {
+      if(hours > 0 && hours < 12) {
+        strcat(line3, MINS[0]); // pile !
+      } else {
+        strcat(line2, MINS[0]); // pile !
+      }
+    }
   }
   else if (minutes < 8) {
     if(hours > 0 && hours < 12) {
-        strcat(line2, STR_HEURE);
+      strcat(line2, STR_HEURE);
       if (hours > 1) strcat(line2, "s");
     }
     strcat(line3, MINS[1]); // cinq
@@ -112,7 +119,14 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
     strcat(line3, MINS[4]); // vingt
   }
   else if (minutes < 28) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, MINS[4]); // vingt
     strcat(line3, MINS[1]); // cinq
   }
@@ -124,28 +138,64 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
     strcat(line3, MINS[5]); // et demi
   }
   else if (minutes < 38) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+//    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, STR_M); // --
     strcat(line2, MINS[4]); // vingt
     strcat(line3, MINS[1]); // cinq
   }
   else if (minutes < 43) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, STR_MOINS);
     strcat(line3, MINS[4]); // vingt
   }
   else if (minutes < 48) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, STR_MOINS);
     strcat(line3, MINS[6]); // le quart
   }
   else if (minutes < 53) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, STR_MOINS);
     strcat(line3, MINS[2]); // dix
   }
   else if (minutes < 58) {
-    if(hours > 0 && hours < 12) strcat(line1, STR_H);
+    if(hours > 0 && hours < 12) {
+      if(hours ==  4) {
+        strcat(line2, STR_H2);
+      } 
+      else {
+        strcat(line1, STR_H);
+      }
+    }
     strcat(line2, STR_MOINS);
     strcat(line3, MINS[1]); // cinq
   }
@@ -153,11 +203,10 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
     strcpy(line1, MINS[7]); // presque
     strcat(line2, HEURES[hours]);
     if(hours > 0 && hours < 12) {
-        strcat(line3, STR_HEURE);
+      strcat(line3, STR_HEURE);
       if (hours > 1) strcat(line3, "s");
     }
   }
-
 }
 
 void info_lines(struct tm* t, char* line1, char* line2) {

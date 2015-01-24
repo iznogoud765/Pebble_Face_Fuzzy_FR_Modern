@@ -36,7 +36,7 @@ static TheTime new_time;
 static bool busy_animating_in = false;
 static bool busy_animating_out = false;
 const int line1_y = 10;
-const int line2_y = 68;
+const int line2_y = 60;
 const int line3_y = 100;
 
 
@@ -166,7 +166,7 @@ static void bt_handler(bool connected) {
 static void main_window_load(Window *window) {
   // Load GFont
   s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_36));
-  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_48));
+  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_45));
   
   // Init the text layers used to show the time
 

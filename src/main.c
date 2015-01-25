@@ -13,7 +13,9 @@ static GFont s_time_font_big;
 
 typedef struct {
   TextLayer *layer[2];
-  //PropertyAnimation layer_animation[2];
+  GRect out_rect;
+  bool busy_animating_in;
+  bool busy_animating_out;
 } TextLine;
 
 typedef struct {
@@ -33,84 +35,71 @@ TextLine bottombar;
 static TheTime cur_time;
 static TheTime new_time;
 
-static bool busy_animating_in = false;
-static bool busy_animating_out = false;
 const int line1_y = 10;
 const int line2_y = 60;
 const int line3_y = 100;
 
 
 
-void animationInStoppedHandler(struct Animation *animation, bool finished, void *context) {
-  busy_animating_in = false;
-  // reset cur_time
-  cur_time = new_time;
+void animateOutStoppedHandler(Animation *animation, bool finished, void *context) {
+  TextLine* line = (TextLine*)context;
+  line->busy_animating_out = false;
+  
+  // restore origin
+  GRect from_frame_out = layer_get_frame(text_layer_get_layer(line->layer[0]));
+  from_frame_out.origin.x = 0;
+  layer_set_frame(text_layer_get_layer(line->layer[0]), from_frame_out);
 }
 
-void animationOutStoppedHandler(struct Animation *animation, bool finished, void *context) {
-  // reset out layer to x=144
-  TextLayer *outside = (TextLayer *)context;
-  GRect rect = layer_get_frame(text_layer_get_layer(outside));
-  if (rect.origin.y == line2_y) rect.origin.x = -144;
-  else rect.origin.x = 144;
-  layer_set_frame(text_layer_get_layer(outside), rect);
-
-  busy_animating_out = false;
+void animateInStoppedHandler(Animation *animation, bool finished, void *context) {
+  TextLine* line = (TextLine*)context;
+  line->busy_animating_in = false;
+  
+  // restore origin
+  GRect from_frame_in = layer_get_frame(text_layer_get_layer(line->layer[1]));
+  from_frame_in.origin.x = 0;
+  if (from_frame_in.origin.y == line2_y) from_frame_in.origin.x = -144;
+  else from_frame_in.origin.x = 144;
+  layer_set_frame(text_layer_get_layer(line->layer[1]), from_frame_in);
 }
 
-void updateLayer(TextLine *animating_line, int line) {
+void updateLayer(TextLine *animating_line, char* old_line, char* new_line) {
+  if (animating_line->busy_animating_out || animating_line->busy_animating_in) return;
 
-  TextLayer *inside, *outside;
-  GRect rect = layer_get_frame(text_layer_get_layer(animating_line->layer[0]));
+  // --- animate out current layer
+  GRect from_frame_out = layer_get_frame(text_layer_get_layer(animating_line->layer[0]));
+  GRect to_frame_out = animating_line->out_rect;
 
-  inside = (rect.origin.x == 0) ? animating_line->layer[0] : animating_line->layer[1];
-  outside = (inside == animating_line->layer[0]) ? animating_line->layer[1] : animating_line->layer[0];
+  text_layer_set_text(animating_line->layer[0], old_line);
 
-  GRect in_rect = layer_get_frame(text_layer_get_layer(outside));
-  GRect out_rect = layer_get_frame(text_layer_get_layer(inside));
-
-  if (line == 2) {
-    in_rect.origin.x += 144;
-    out_rect.origin.x += 144;
-  } else {
-    in_rect.origin.x -= 144;
-    out_rect.origin.x -= 144;
-  }
-
- // animate out current layer
-  busy_animating_out = true;
-  PropertyAnimation *animate_out;
-  animate_out = property_animation_create_layer_frame(text_layer_get_layer(inside), NULL, &out_rect);
-  animation_set_duration((Animation*)animate_out, ANIMATION_DURATION);
-  animation_set_curve((Animation*)animate_out, AnimationCurveEaseOut);
+  // Create the animation
+  PropertyAnimation *animate_out = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[0]), &from_frame_out, &to_frame_out);
+  animation_set_duration((Animation*) animate_out, ANIMATION_DURATION);
+  animation_set_curve((Animation*) animate_out, AnimationCurveEaseOut);
   animation_set_handlers((Animation*)animate_out, (AnimationHandlers) {
-    .stopped = (AnimationStoppedHandler)animationOutStoppedHandler
-  }, (void *)inside);
-  animation_schedule((Animation*)animate_out);
+    .stopped = (AnimationStoppedHandler)animateOutStoppedHandler
+  }, (void*)animating_line);
 
-  if (line==1){
-    text_layer_set_text(outside, new_time.line1);
-    text_layer_set_text(inside, cur_time.line1);
-  }
-  if (line==2){
-    text_layer_set_text(outside, new_time.line2);
-    text_layer_set_text(inside, cur_time.line2);
-  }
-  if (line==3){
-    text_layer_set_text(outside, new_time.line3);
-    text_layer_set_text(inside, cur_time.line3);
-  }
+  // --- animate in current layer
+  GRect from_frame_in = layer_get_frame(text_layer_get_layer(animating_line->layer[1]));
+  GRect to_frame_in = layer_get_frame(text_layer_get_layer(animating_line->layer[0]));
 
-  // animate in new layer
-  busy_animating_in = true;
-  PropertyAnimation *animate_in;
-  animate_in = property_animation_create_layer_frame(text_layer_get_layer(outside), NULL, &in_rect);
-  animation_set_duration((Animation*)animate_in, ANIMATION_DURATION);
-  animation_set_curve((Animation*)animate_in, AnimationCurveEaseOut);
+  text_layer_set_text(animating_line->layer[1], new_line);
+
+  // Create the animation
+  PropertyAnimation *animate_in = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[1]), &from_frame_in, &to_frame_in);
+  animation_set_duration((Animation*) animate_in, ANIMATION_DURATION);
+  animation_set_curve((Animation*) animate_in, AnimationCurveEaseOut);
   animation_set_handlers((Animation*)animate_in, (AnimationHandlers) {
-    .stopped = (AnimationStoppedHandler)animationInStoppedHandler
-  }, (void *)outside);
-  animation_schedule((Animation*)animate_in);
+    .stopped = (AnimationStoppedHandler)animateInStoppedHandler
+  }, (void*)animating_line);
+
+  // Schedule to occur ASAP with default settings
+  animation_schedule((Animation*) animate_out);
+  animating_line->busy_animating_out = true;
+  // Schedule to occur ASAP with default settings
+  animation_schedule((Animation*) animate_in);
+  animating_line->busy_animating_in = true;
 }
 
 void update_watch(struct tm* t) {
@@ -126,12 +115,15 @@ void update_watch(struct tm* t) {
   fuzzy_time(t, new_time.line1, new_time.line2, new_time.line3);
 
   // update hour only if changed
-  if(strcmp(new_time.line1, cur_time.line1) != 0) updateLayer(&line1, 1);
+  if(strcmp(new_time.line1, cur_time.line1) != 0) updateLayer(&line1, cur_time.line1, new_time.line1);
   // update min1 only if changed
-  if(strcmp(new_time.line2, cur_time.line2) != 0) updateLayer(&line2, 2);
+  if(strcmp(new_time.line2, cur_time.line2) != 0) updateLayer(&line2, cur_time.line2, new_time.line2);
   // update min2 only if changed happens on
-  if(strcmp(new_time.line3, cur_time.line3) != 0) updateLayer(&line3, 3);
+  if(strcmp(new_time.line3, cur_time.line3) != 0) updateLayer(&line3, cur_time.line3, new_time.line3);
 
+  // reset cur_time
+  cur_time = new_time;
+  
   // vibrate at o'clock from 8 to 24
 //  if(t->tm_min == 0 && t->tm_sec == 0 && t->tm_hour >= 8 && t->tm_hour <= 24 ) vibes_double_pulse();
 //  if(t->tm_min == 59 && t->tm_sec == 57 && t->tm_hour >= 7 && t->tm_hour <= 23 ) vibes_short_pulse();
@@ -140,10 +132,8 @@ void update_watch(struct tm* t) {
 static void battery_handler(BatteryChargeState charge_state) {
   static char s_battery_buffer[16];
 
-//  if (busy_animating_out || busy_animating_in) return;
-
   if (charge_state.is_charging) {
-    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%/", charge_state.charge_percent);
+    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%§", charge_state.charge_percent);
   } else {
     snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%", charge_state.charge_percent);
   }
@@ -152,8 +142,6 @@ static void battery_handler(BatteryChargeState charge_state) {
 
 static void bt_handler(bool connected) {
   static char s_bt_buffer[10];
-
-//  if (busy_animating_out || busy_animating_in) return;
 
   if (connected) {
     strcpy(s_bt_buffer, "*");
@@ -184,6 +172,10 @@ static void main_window_load(Window *window) {
   text_layer_set_font(line1.layer[1], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[1], GTextAlignmentLeft);
 
+  line1.out_rect = GRect(-144, line1_y, 144, 60);
+  line1.busy_animating_out = false;
+  line1.busy_animating_in = false;
+  
   // line2
   line2.layer[0] = text_layer_create(GRect(0, line2_y, 144, 50));
 //  text_layer_set_text_color(line2.layer[0], GColorWhite);
@@ -198,6 +190,10 @@ static void main_window_load(Window *window) {
   text_layer_set_font(line2.layer[1], s_time_font);
   text_layer_set_text_alignment(line2.layer[1], GTextAlignmentLeft);
 
+  line2.out_rect = GRect(144, line2_y, 144, 50);
+  line2.busy_animating_out = false;
+  line2.busy_animating_in = false;
+
   // line3
   line3.layer[0] = text_layer_create(GRect(0, line3_y, 144, 50));
 //  text_layer_set_text_color(line3.layer[0], GColorWhite);
@@ -210,6 +206,10 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(line3.layer[1], GColorClear);
   text_layer_set_font(line3.layer[1], s_time_font);
   text_layer_set_text_alignment(line3.layer[1], GTextAlignmentLeft);
+
+  line3.out_rect = GRect(-144, line3_y, 144, 50);
+  line3.busy_animating_out = false;
+  line3.busy_animating_in = false;
 
   // top text
   topbar.layer[0] = text_layer_create(GRect(0, 0, 100, 18));
@@ -237,8 +237,7 @@ static void main_window_load(Window *window) {
   struct tm *t = localtime(&now);
   update_watch(t);
   
-  BatteryChargeState charge_state = battery_state_service_peek();
-  battery_handler(charge_state);
+  battery_handler(battery_state_service_peek());
   
   bt_handler(bluetooth_connection_service_peek());
 
@@ -272,8 +271,6 @@ static void main_window_unload(Window *window) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  if (busy_animating_out || busy_animating_in) return;
-
   update_watch(tick_time);
 }
   

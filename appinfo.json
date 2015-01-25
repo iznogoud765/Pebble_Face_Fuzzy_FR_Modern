@@ -3,11 +3,17 @@
     "capabilities": [
         ""
     ],
-    "companyName": "alec6.landriot@gmail.com",
+    "companyName": "Alec6",
     "longName": "FuzzyTime_FR_Modern",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/menu_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON",
+                "type": "png"
+            },
             {
                 "file": "images/1421014290_bluetooth_disabled.png",
                 "name": "IMAGE_BLUETOOTH_INACTIVE",
@@ -29,16 +35,10 @@
                 "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
                 "trackingAdjust": -2,
                 "type": "font"
-            },
-            {
-                "file": "images/menu_icon.png",
-                "menuIcon": true,
-                "name": "IMAGE_MENU_ICON",
-                "type": "png"
             }
         ]
     },
-    "shortName": "FuzzyTime_FR_Modern",
+    "shortName": "FuzzyTime",
     "uuid": "52ddf87e-6c31-4f30-90bc-6a13434e6ce5",
     "versionCode": 1,
     "versionLabel": "1.0",

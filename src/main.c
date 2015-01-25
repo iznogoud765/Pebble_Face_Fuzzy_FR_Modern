@@ -10,6 +10,8 @@ static Window *s_main_window;
 
 static GFont s_time_font;
 static GFont s_time_font_big;
+static GBitmap *s_bitmap_bt_on;
+static GBitmap *s_bitmap_bt_off;
 
 typedef struct {
   TextLayer *layer[2];
@@ -31,6 +33,7 @@ TextLine line2;
 TextLine line3;
 TextLine topbar;
 TextLine bottombar;
+static BitmapLayer *s_bitmap_layer;
 
 static TheTime cur_time;
 static TheTime new_time;
@@ -130,7 +133,7 @@ void update_watch(struct tm* t) {
 }
 
 static void battery_handler(BatteryChargeState charge_state) {
-  static char s_battery_buffer[16];
+  static char s_battery_buffer[10];
 
   if (charge_state.is_charging) {
     snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%§", charge_state.charge_percent);
@@ -141,14 +144,16 @@ static void battery_handler(BatteryChargeState charge_state) {
 }
 
 static void bt_handler(bool connected) {
-  static char s_bt_buffer[10];
+//  static char s_bt_buffer[10];
 
   if (connected) {
-    strcpy(s_bt_buffer, "*");
+    bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap_bt_on);
+//    strcpy(s_bt_buffer, "*");
   } else {
-    strcpy(s_bt_buffer, "");
+    bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap_bt_off);
+//    strcpy(s_bt_buffer, "");
   }
-  text_layer_set_text(topbar.layer[1], s_bt_buffer);
+//  text_layer_set_text(topbar.layer[1], s_bt_buffer);
 }
 
 static void main_window_load(Window *window) {
@@ -160,17 +165,17 @@ static void main_window_load(Window *window) {
 
   // line1
   line1.layer[0] = text_layer_create(GRect(0, line1_y, 144, 60));
-//  text_layer_set_text_color(line1.layer[0], GColorWhite);
   text_layer_set_background_color(line1.layer[0], GColorClear);
 //  text_layer_set_font(line1.layer[0], fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_font(line1.layer[0], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[0], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line1.layer[0], GTextOverflowModeWordWrap);
 
   line1.layer[1] = text_layer_create(GRect(144, line1_y, 144, 60));
-//  text_layer_set_text_color(line1.layer[1], GColorWhite);
   text_layer_set_background_color(line1.layer[1], GColorClear);
   text_layer_set_font(line1.layer[1], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[1], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line1.layer[1], GTextOverflowModeWordWrap);
 
   line1.out_rect = GRect(-144, line1_y, 144, 60);
   line1.busy_animating_out = false;
@@ -178,17 +183,17 @@ static void main_window_load(Window *window) {
   
   // line2
   line2.layer[0] = text_layer_create(GRect(0, line2_y, 144, 50));
-//  text_layer_set_text_color(line2.layer[0], GColorWhite);
   text_layer_set_background_color(line2.layer[0], GColorClear);
 //  text_layer_set_font(line2.layer[0], fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT));
   text_layer_set_font(line2.layer[0], s_time_font);
   text_layer_set_text_alignment(line2.layer[0], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line2.layer[0], GTextOverflowModeWordWrap);
 
   line2.layer[1] = text_layer_create(GRect(-144, line2_y, 144, 50));
-//  text_layer_set_text_color(line2.layer[1], GColorWhite);
   text_layer_set_background_color(line2.layer[1], GColorClear);
   text_layer_set_font(line2.layer[1], s_time_font);
   text_layer_set_text_alignment(line2.layer[1], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line2.layer[1], GTextOverflowModeWordWrap);
 
   line2.out_rect = GRect(144, line2_y, 144, 50);
   line2.busy_animating_out = false;
@@ -196,16 +201,16 @@ static void main_window_load(Window *window) {
 
   // line3
   line3.layer[0] = text_layer_create(GRect(0, line3_y, 144, 50));
-//  text_layer_set_text_color(line3.layer[0], GColorWhite);
   text_layer_set_background_color(line3.layer[0], GColorClear);
   text_layer_set_font(line3.layer[0], s_time_font);
   text_layer_set_text_alignment(line3.layer[0], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line3.layer[0], GTextOverflowModeWordWrap);
 
   line3.layer[1] = text_layer_create(GRect(144, line3_y, 144, 50));
-//  text_layer_set_text_color(line3.layer[1], GColorWhite);
   text_layer_set_background_color(line3.layer[1], GColorClear);
   text_layer_set_font(line3.layer[1], s_time_font);
   text_layer_set_text_alignment(line3.layer[1], GTextAlignmentLeft);
+  text_layer_set_overflow_mode (line3.layer[1], GTextOverflowModeWordWrap);
 
   line3.out_rect = GRect(-144, line3_y, 144, 50);
   line3.busy_animating_out = false;
@@ -213,17 +218,15 @@ static void main_window_load(Window *window) {
 
   // top text
   topbar.layer[0] = text_layer_create(GRect(0, 0, 100, 18));
-//  text_layer_set_text_color(topbar.layer[0], GColorWhite);
   text_layer_set_background_color(topbar.layer[0], GColorClear);
   text_layer_set_font(topbar.layer[0], fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(topbar.layer[0], GTextAlignmentLeft);
-
+/*
   topbar.layer[1] = text_layer_create(GRect(100, 0, 44, 18));
-//  text_layer_set_text_color(topbar.layer[0], GColorWhite);
   text_layer_set_background_color(topbar.layer[0], GColorClear);
   text_layer_set_font(topbar.layer[1], fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(topbar.layer[1], GTextAlignmentRight);
-
+*/
   // bottom text
   bottombar.layer[0] = text_layer_create(GRect(0, 150, 144, 18));
 //  text_layer_set_text_color(bottombar.layer[0], GColorWhite);
@@ -231,6 +234,14 @@ static void main_window_load(Window *window) {
   text_layer_set_font(bottombar.layer[0], fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(bottombar.layer[0], GTextAlignmentCenter);
 
+  // Create GBitmap, then set to created BitmapLayer
+  s_bitmap_bt_on = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_ON);
+  s_bitmap_bt_off = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_OFF);
+  s_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 18));
+//  bitmap_layer_set_background_color(s_bitmap_layer, GColorWhite);
+//  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpAssign);
+  bitmap_layer_set_alignment(s_bitmap_layer, GAlignRight);
+    
   // Ensures time is displayed immediately (will break if NULL tick event accessed).
   // (This is why it's a good idea to have a separate routine to do the update itself.)
   time_t now = time(NULL);
@@ -250,8 +261,9 @@ static void main_window_load(Window *window) {
   layer_add_child(root_layer, text_layer_get_layer(line1.layer[0]));
   layer_add_child(root_layer, text_layer_get_layer(line1.layer[1]));
   layer_add_child(root_layer, text_layer_get_layer(topbar.layer[0]));
-  layer_add_child(root_layer, text_layer_get_layer(topbar.layer[1]));
+//  layer_add_child(root_layer, text_layer_get_layer(topbar.layer[1]));
   layer_add_child(root_layer, text_layer_get_layer(bottombar.layer[0]));
+  layer_add_child(root_layer, bitmap_layer_get_layer(s_bitmap_layer));
 }
 
 static void main_window_unload(Window *window) {
@@ -262,9 +274,17 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(line2.layer[1]);
   text_layer_destroy(line3.layer[0]);
   text_layer_destroy(line3.layer[1]);
-  text_layer_destroy(bottombar.layer[0]);
   text_layer_destroy(topbar.layer[0]);
+//  text_layer_destroy(topbar.layer[1]);
+  text_layer_destroy(bottombar.layer[0]);
+
+  // Destroy BitmapLayer
+  bitmap_layer_destroy(s_bitmap_layer);
   
+  // Destroy GBitmap
+  gbitmap_destroy(s_bitmap_bt_on);
+  gbitmap_destroy(s_bitmap_bt_off);
+
   // Unload GFont
   fonts_unload_custom_font(s_time_font);
   fonts_unload_custom_font(s_time_font_big);

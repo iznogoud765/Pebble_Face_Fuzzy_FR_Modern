@@ -139,7 +139,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
       if (hours > 1) strcat(line2, "s");
       strcat(line3, MINS[5]); // et demi
     }
-    strcat(line2, MINS[5]); // et demi
+    else strcat(line2, MINS[5]); // et demi
   }
   else if (minutes < 38) {
 //    if(hours > 0 && hours < 12) strcat(line1, STR_H);

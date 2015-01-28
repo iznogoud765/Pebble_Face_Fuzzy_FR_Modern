@@ -119,7 +119,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
       if (hours > 1) strcat(line2, "s");
       strcat(line3, MINS[4]); // vingt
     }
-    else strcat(line3, MINS[4]); // vingt
+    else strcat(line2, MINS[4]); // vingt
   }
   else if (minutes < 28) {
     if(hours > 0 && hours < 12) {
@@ -164,7 +164,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
         strcat(line1, STR_H);
       }
     }
-    strcat(line2, STR_MOINS);
+    strcat(line2, STR_MOINS); // moins
     strcat(line3, MINS[4]); // vingt
   }
   else if (minutes < 48) {
@@ -176,7 +176,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
         strcat(line1, STR_H);
       }
     }
-    strcat(line2, STR_MOINS);
+    strcat(line2, STR_MOINS); // moins
     strcat(line3, MINS[6]); // le quart
   }
   else if (minutes < 53) {
@@ -188,7 +188,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
         strcat(line1, STR_H);
       }
     }
-    strcat(line2, STR_MOINS);
+    strcat(line2, STR_MOINS); // moins
     strcat(line3, MINS[2]); // dix
   }
   else if (minutes < 58) {
@@ -200,7 +200,7 @@ void fuzzy_time(struct tm* t, char* line1, char* line2, char* line3) {
         strcat(line1, STR_H);
       }
     }
-    strcat(line2, STR_MOINS);
+    strcat(line2, STR_MOINS); // moins
     strcat(line3, MINS[1]); // cinq
   }
   else if (minutes >= 58) {

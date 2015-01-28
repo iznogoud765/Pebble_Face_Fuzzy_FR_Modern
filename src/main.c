@@ -12,28 +12,34 @@ static GFont s_time_font;
 static GFont s_time_font_big;
 static GBitmap *s_bitmap_bt_on;
 static GBitmap *s_bitmap_bt_off;
+static GBitmap *s_bitmap_charging;
 
 typedef struct {
   TextLayer *layer[2];
   GRect out_rect;
   bool busy_animating_in;
   bool busy_animating_out;
+  PropertyAnimation *animate_out;
+  PropertyAnimation *animate_in;
 } TextLine;
 
 typedef struct {
   char line1[LINE_BUFFER_SIZE];
   char line2[LINE_BUFFER_SIZE];
   char line3[LINE_BUFFER_SIZE];
-  char topbar[LINE_BUFFER_SIZE];
-  char bottombar[LINE_BUFFER_SIZE];
+  char topline[LINE_BUFFER_SIZE];
+  char bottomline[LINE_BUFFER_SIZE];
 } TheTime;
 
-TextLine line1;
-TextLine line2;
-TextLine line3;
-TextLine topbar;
-TextLine bottombar;
-static BitmapLayer *s_bitmap_layer;
+static TextLine line1;
+static TextLine line2;
+static TextLine line3;
+//static TextLine topbar;
+//static TextLine bottombar;
+static TextLayer *batterylayer;
+static TextLayer *bottomlayer;
+static BitmapLayer *s_bt_bitmap_layer;
+static BitmapLayer *s_ch_bitmap_layer;
 
 static TheTime cur_time;
 static TheTime new_time;
@@ -48,71 +54,96 @@ void animateOutStoppedHandler(Animation *animation, bool finished, void *context
   TextLine* line = (TextLine*)context;
   line->busy_animating_out = false;
   
-  // restore origin
-  GRect from_frame_out = layer_get_frame(text_layer_get_layer(line->layer[0]));
-  from_frame_out.origin.x = 0;
-  layer_set_frame(text_layer_get_layer(line->layer[0]), from_frame_out);
+  // Free the animation
+  property_animation_destroy(line->animate_out);
+
+  if(finished) {
+    // restore origin
+    GRect from_frame_out = layer_get_frame(text_layer_get_layer(line->layer[0]));
+    from_frame_out.origin.x = 0;
+    layer_set_frame(text_layer_get_layer(line->layer[0]), from_frame_out);
+  }
 }
 
 void animateInStoppedHandler(Animation *animation, bool finished, void *context) {
   TextLine* line = (TextLine*)context;
   line->busy_animating_in = false;
   
-  // restore origin
-  GRect from_frame_in = layer_get_frame(text_layer_get_layer(line->layer[1]));
-  from_frame_in.origin.x = 0;
-  if (from_frame_in.origin.y == line2_y) from_frame_in.origin.x = -144;
-  else from_frame_in.origin.x = 144;
-  layer_set_frame(text_layer_get_layer(line->layer[1]), from_frame_in);
+  // Free the animation
+  property_animation_destroy(line->animate_in);
+  
+  if(finished) {
+    // restore origin
+    GRect from_frame_in = layer_get_frame(text_layer_get_layer(line->layer[1]));
+    from_frame_in.origin.x = 0;
+    if (from_frame_in.origin.y == line2_y) from_frame_in.origin.x = -144;
+    else from_frame_in.origin.x = 144;
+    layer_set_frame(text_layer_get_layer(line->layer[1]), from_frame_in);
+  }
 }
 
 void updateLayer(TextLine *animating_line, char* old_line, char* new_line) {
-  if (animating_line->busy_animating_out || animating_line->busy_animating_in) return;
+//  if (animating_line->busy_animating_out || animating_line->busy_animating_in) return;
 
-  // --- animate out current layer
+  // --- test animate out
+  if (animation_is_scheduled((Animation*) animating_line->animate_out))
+	{
+	  animation_unschedule((Animation*) animating_line->animate_out);
+	}
+
+  // animate out current layer
   GRect from_frame_out = layer_get_frame(text_layer_get_layer(animating_line->layer[0]));
   GRect to_frame_out = animating_line->out_rect;
 
-  text_layer_set_text(animating_line->layer[0], old_line);
-
   // Create the animation
-  PropertyAnimation *animate_out = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[0]), &from_frame_out, &to_frame_out);
-  animation_set_duration((Animation*) animate_out, ANIMATION_DURATION);
-  animation_set_curve((Animation*) animate_out, AnimationCurveEaseOut);
-  animation_set_handlers((Animation*)animate_out, (AnimationHandlers) {
+  animating_line->animate_out = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[0]), &from_frame_out, &to_frame_out);
+  animation_set_duration((Animation*) animating_line->animate_out, ANIMATION_DURATION);
+  animation_set_curve((Animation*) animating_line->animate_out, AnimationCurveEaseOut);
+  animation_set_handlers((Animation*)(animating_line->animate_out), (AnimationHandlers) {
     .stopped = (AnimationStoppedHandler)animateOutStoppedHandler
   }, (void*)animating_line);
 
-  // --- animate in current layer
+  // --- test animate in
+  if (animation_is_scheduled((Animation*) animating_line->animate_in))
+	{
+	  animation_unschedule((Animation*) animating_line->animate_in);
+	}
+
+  // animate in current layer
   GRect from_frame_in = layer_get_frame(text_layer_get_layer(animating_line->layer[1]));
   GRect to_frame_in = layer_get_frame(text_layer_get_layer(animating_line->layer[0]));
 
-  text_layer_set_text(animating_line->layer[1], new_line);
-
   // Create the animation
-  PropertyAnimation *animate_in = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[1]), &from_frame_in, &to_frame_in);
-  animation_set_duration((Animation*) animate_in, ANIMATION_DURATION);
-  animation_set_curve((Animation*) animate_in, AnimationCurveEaseOut);
-  animation_set_handlers((Animation*)animate_in, (AnimationHandlers) {
+  animating_line->animate_in = property_animation_create_layer_frame(text_layer_get_layer(animating_line->layer[1]), &from_frame_in, &to_frame_in);
+  animation_set_duration((Animation*) animating_line->animate_in, ANIMATION_DURATION);
+  animation_set_curve((Animation*) animating_line->animate_in, AnimationCurveEaseOut);
+  animation_set_handlers((Animation*) animating_line->animate_in, (AnimationHandlers) {
     .stopped = (AnimationStoppedHandler)animateInStoppedHandler
   }, (void*)animating_line);
 
+  GSize size= graphics_text_layout_get_content_size(new_line,
+                                        (animating_line->out_rect.origin.y==line1_y)?s_time_font_big:s_time_font,
+                                        animating_line->out_rect,
+                                        GTextOverflowModeTrailingEllipsis,
+                                        GTextAlignmentLeft);
+  APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE , "line text size: %d", size.w);
+
   // Schedule to occur ASAP with default settings
-  animation_schedule((Animation*) animate_out);
+  text_layer_set_text(animating_line->layer[0], old_line);
+  animation_schedule((Animation*) animating_line->animate_out);
   animating_line->busy_animating_out = true;
   // Schedule to occur ASAP with default settings
-  animation_schedule((Animation*) animate_in);
+  text_layer_set_text(animating_line->layer[1], new_line);
+  animation_schedule((Animation*) animating_line->animate_in);
   animating_line->busy_animating_in = true;
 }
 
 void update_watch(struct tm* t) {
   // Let's get the new text date
-  info_lines(t, new_time.topbar, new_time.bottombar);
+  info_lines(t, new_time.topline, new_time.bottomline);
 
-  // Let's update the top bar
-  //if(strcmp(new_time.topbar, cur_time.topbar) != 0) text_layer_set_text(topbar.layer[0], new_time.topbar);
   // Let's update the bottom bar
-  text_layer_set_text(bottombar.layer[0], new_time.bottombar);
+  text_layer_set_text(bottomlayer, new_time.bottomline);
 
   // Let's get the new text time
   fuzzy_time(t, new_time.line1, new_time.line2, new_time.line3);
@@ -136,30 +167,37 @@ static void battery_handler(BatteryChargeState charge_state) {
   static char s_battery_buffer[10];
 
   if (charge_state.is_charging) {
-    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%§", charge_state.charge_percent);
-  } else {
-    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%", charge_state.charge_percent);
+    layer_set_hidden ((Layer *)s_ch_bitmap_layer, false);
+//    bitmap_layer_set_bitmap(s_ch_bitmap_layer, s_bitmap_charging);
+  } 
+  else {
+    layer_set_hidden ((Layer *)s_ch_bitmap_layer, true);
   }
-  text_layer_set_text(topbar.layer[0], s_battery_buffer);
+  snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%", charge_state.charge_percent);
+  text_layer_set_text(batterylayer, s_battery_buffer);
+
+  GSize size= graphics_text_layout_get_content_size(s_battery_buffer,
+                                        fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                                        GRect(0, 0, 100, 18),
+                                        GTextOverflowModeTrailingEllipsis,
+                                        GTextAlignmentRight);
+  APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE , "battery text size: %d", size.w);
 }
 
 static void bt_handler(bool connected) {
-//  static char s_bt_buffer[10];
 
   if (connected) {
-    bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap_bt_on);
-//    strcpy(s_bt_buffer, "*");
+    bitmap_layer_set_bitmap(s_bt_bitmap_layer, s_bitmap_bt_on);
   } else {
-    bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap_bt_off);
-//    strcpy(s_bt_buffer, "");
+    bitmap_layer_set_bitmap(s_bt_bitmap_layer, s_bitmap_bt_off);
+    vibes_short_pulse();
   }
-//  text_layer_set_text(topbar.layer[1], s_bt_buffer);
 }
 
 static void main_window_load(Window *window) {
   // Load GFont
   s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_36));
-  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_45));
+  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_46));
   
   // Init the text layers used to show the time
 
@@ -169,13 +207,13 @@ static void main_window_load(Window *window) {
 //  text_layer_set_font(line1.layer[0], fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_font(line1.layer[0], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[0], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line1.layer[0], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line1.layer[0], GTextOverflowModeWordWrap);
 
   line1.layer[1] = text_layer_create(GRect(144, line1_y, 144, 60));
   text_layer_set_background_color(line1.layer[1], GColorClear);
   text_layer_set_font(line1.layer[1], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[1], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line1.layer[1], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line1.layer[1], GTextOverflowModeWordWrap);
 
   line1.out_rect = GRect(-144, line1_y, 144, 60);
   line1.busy_animating_out = false;
@@ -184,16 +222,15 @@ static void main_window_load(Window *window) {
   // line2
   line2.layer[0] = text_layer_create(GRect(0, line2_y, 144, 50));
   text_layer_set_background_color(line2.layer[0], GColorClear);
-//  text_layer_set_font(line2.layer[0], fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT));
   text_layer_set_font(line2.layer[0], s_time_font);
   text_layer_set_text_alignment(line2.layer[0], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line2.layer[0], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line2.layer[0], GTextOverflowModeWordWrap);
 
   line2.layer[1] = text_layer_create(GRect(-144, line2_y, 144, 50));
   text_layer_set_background_color(line2.layer[1], GColorClear);
   text_layer_set_font(line2.layer[1], s_time_font);
   text_layer_set_text_alignment(line2.layer[1], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line2.layer[1], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line2.layer[1], GTextOverflowModeWordWrap);
 
   line2.out_rect = GRect(144, line2_y, 144, 50);
   line2.busy_animating_out = false;
@@ -204,43 +241,45 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(line3.layer[0], GColorClear);
   text_layer_set_font(line3.layer[0], s_time_font);
   text_layer_set_text_alignment(line3.layer[0], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line3.layer[0], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line3.layer[0], GTextOverflowModeWordWrap);
 
   line3.layer[1] = text_layer_create(GRect(144, line3_y, 144, 50));
   text_layer_set_background_color(line3.layer[1], GColorClear);
   text_layer_set_font(line3.layer[1], s_time_font);
   text_layer_set_text_alignment(line3.layer[1], GTextAlignmentLeft);
-  text_layer_set_overflow_mode (line3.layer[1], GTextOverflowModeWordWrap);
+//  text_layer_set_overflow_mode (line3.layer[1], GTextOverflowModeWordWrap);
 
   line3.out_rect = GRect(-144, line3_y, 144, 50);
   line3.busy_animating_out = false;
   line3.busy_animating_in = false;
 
-  // top text
-  topbar.layer[0] = text_layer_create(GRect(0, 0, 100, 18));
-  text_layer_set_background_color(topbar.layer[0], GColorClear);
-  text_layer_set_font(topbar.layer[0], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text_alignment(topbar.layer[0], GTextAlignmentLeft);
-/*
-  topbar.layer[1] = text_layer_create(GRect(100, 0, 44, 18));
-  text_layer_set_background_color(topbar.layer[0], GColorClear);
-  text_layer_set_font(topbar.layer[1], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text_alignment(topbar.layer[1], GTextAlignmentRight);
-*/
+  // battery text
+  batterylayer = text_layer_create(GRect(0, 0, 30, 18));
+  text_layer_set_background_color(batterylayer, GColorClear);
+  text_layer_set_font(batterylayer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text_alignment(batterylayer, GTextAlignmentRight);
+
+  // Create charging GBitmap, then set to created BitmapLayer
+  s_bitmap_charging = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
+  s_ch_bitmap_layer = bitmap_layer_create(GRect(32, 0, 20, 18));
+  bitmap_layer_set_alignment(s_ch_bitmap_layer, GAlignLeft);
+  layer_set_hidden ((Layer *)s_ch_bitmap_layer, true);
+  bitmap_layer_set_bitmap(s_ch_bitmap_layer, s_bitmap_charging);
+  
   // bottom text
-  bottombar.layer[0] = text_layer_create(GRect(0, 150, 144, 18));
-//  text_layer_set_text_color(bottombar.layer[0], GColorWhite);
-  text_layer_set_background_color(bottombar.layer[0], GColorClear);
-  text_layer_set_font(bottombar.layer[0], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text_alignment(bottombar.layer[0], GTextAlignmentCenter);
+  bottomlayer = text_layer_create(GRect(0, 150, 144, 18));
+//  text_layer_set_text_color(bottomlayer], GColorWhite);
+  text_layer_set_background_color(bottomlayer, GColorClear);
+  text_layer_set_font(bottomlayer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text_alignment(bottomlayer, GTextAlignmentCenter);
 
   // Create GBitmap, then set to created BitmapLayer
   s_bitmap_bt_on = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_ON);
   s_bitmap_bt_off = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_OFF);
-  s_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 18));
-//  bitmap_layer_set_background_color(s_bitmap_layer, GColorWhite);
-//  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpAssign);
-  bitmap_layer_set_alignment(s_bitmap_layer, GAlignRight);
+  s_bt_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 18));
+//  bitmap_layer_set_background_color(s_bt_bitmap_layer, GColorWhite);
+//  bitmap_layer_set_compositing_mode(s_bt_bitmap_layer, GCompOpAssign);
+  bitmap_layer_set_alignment(s_bt_bitmap_layer, GAlignRight);
     
   // Ensures time is displayed immediately (will break if NULL tick event accessed).
   // (This is why it's a good idea to have a separate routine to do the update itself.)
@@ -260,10 +299,10 @@ static void main_window_load(Window *window) {
   layer_add_child(root_layer, text_layer_get_layer(line2.layer[1]));
   layer_add_child(root_layer, text_layer_get_layer(line1.layer[0]));
   layer_add_child(root_layer, text_layer_get_layer(line1.layer[1]));
-  layer_add_child(root_layer, text_layer_get_layer(topbar.layer[0]));
-//  layer_add_child(root_layer, text_layer_get_layer(topbar.layer[1]));
-  layer_add_child(root_layer, text_layer_get_layer(bottombar.layer[0]));
-  layer_add_child(root_layer, bitmap_layer_get_layer(s_bitmap_layer));
+  layer_add_child(root_layer, text_layer_get_layer(batterylayer));
+  layer_add_child(root_layer, text_layer_get_layer(bottomlayer));
+  layer_add_child(root_layer, bitmap_layer_get_layer(s_bt_bitmap_layer));
+  layer_add_child(root_layer, bitmap_layer_get_layer(s_ch_bitmap_layer));
 }
 
 static void main_window_unload(Window *window) {
@@ -274,20 +313,24 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(line2.layer[1]);
   text_layer_destroy(line3.layer[0]);
   text_layer_destroy(line3.layer[1]);
-  text_layer_destroy(topbar.layer[0]);
-//  text_layer_destroy(topbar.layer[1]);
-  text_layer_destroy(bottombar.layer[0]);
+  text_layer_destroy(batterylayer);
+  text_layer_destroy(bottomlayer);
 
   // Destroy BitmapLayer
-  bitmap_layer_destroy(s_bitmap_layer);
+  bitmap_layer_destroy(s_bt_bitmap_layer);
+  bitmap_layer_destroy(s_ch_bitmap_layer);
   
   // Destroy GBitmap
   gbitmap_destroy(s_bitmap_bt_on);
   gbitmap_destroy(s_bitmap_bt_off);
+  gbitmap_destroy(s_bitmap_charging);
 
   // Unload GFont
   fonts_unload_custom_font(s_time_font);
   fonts_unload_custom_font(s_time_font_big);
+  
+  // Stop any animation in progress
+  animation_unschedule_all();  
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {

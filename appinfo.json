@@ -31,13 +31,12 @@
             },
             {
                 "file": "fonts/Domestic_Manners.ttf",
-                "name": "FONT_DOMESTIC_BOLD_SUBSET_46",
+                "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
                 "type": "font"
             },
             {
                 "file": "fonts/Domestic_Manners.ttf",
-                "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
-                "trackingAdjust": -1,
+                "name": "FONT_DOMESTIC_BOLD_SUBSET_48",
                 "type": "font"
             }
         ]
@@ -45,7 +44,7 @@
     "shortName": "FuzzyTime",
     "uuid": "52ddf87e-6c31-4f30-90bc-6a13434e6ce5",
     "versionCode": 1,
-    "versionLabel": "1.2",
+    "versionLabel": "1.3",
     "watchapp": {
         "watchface": true
     }

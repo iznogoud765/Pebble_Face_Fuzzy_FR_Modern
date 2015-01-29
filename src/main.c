@@ -123,7 +123,7 @@ void updateLayer(TextLine *animating_line, char* old_line, char* new_line) {
 
   GSize size= graphics_text_layout_get_content_size(new_line,
                                         (animating_line->out_rect.origin.y==line1_y)?s_time_font_big:s_time_font,
-                                        animating_line->out_rect,
+                                        GRect(0, 0, 200, animating_line->out_rect.size.h),
                                         GTextOverflowModeTrailingEllipsis,
                                         GTextAlignmentLeft);
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE , "line text size: %d", size.w);
@@ -197,7 +197,7 @@ static void bt_handler(bool connected) {
 static void main_window_load(Window *window) {
   // Load GFont
   s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_36));
-  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_46));
+  s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_48));
   
   // Init the text layers used to show the time
 

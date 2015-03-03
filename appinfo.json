@@ -4,24 +4,19 @@
         ""
     ],
     "companyName": "Alec6",
-    "longName": "FuzzyTime_FR_Modern",
+    "longName": "FuzzyTime_FR_Modern_Black",
     "projectType": "native",
     "resources": {
         "media": [
             {
-                "file": "images/charging.png",
-                "name": "IMAGE_CHARGING",
-                "type": "png"
+                "file": "fonts/Domestic_Manners.ttf",
+                "name": "FONT_DOMESTIC_BOLD_SUBSET_48",
+                "type": "font"
             },
             {
-                "file": "images/bluetooth_off.png",
-                "name": "IMAGE_BLUETOOTH_OFF",
-                "type": "png"
-            },
-            {
-                "file": "images/bluetooth_on.png",
-                "name": "IMAGE_BLUETOOTH_ON",
-                "type": "png"
+                "file": "fonts/Domestic_Manners.ttf",
+                "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
+                "type": "font"
             },
             {
                 "file": "images/menu_icon.png",
@@ -30,20 +25,25 @@
                 "type": "png"
             },
             {
-                "file": "fonts/Domestic_Manners.ttf",
-                "name": "FONT_DOMESTIC_BOLD_SUBSET_36",
-                "type": "font"
+                "file": "images/bluetooth_on.png",
+                "name": "IMAGE_BLUETOOTH_ON",
+                "type": "png"
             },
             {
-                "file": "fonts/Domestic_Manners.ttf",
-                "name": "FONT_DOMESTIC_BOLD_SUBSET_48",
-                "type": "font"
+                "file": "images/bluetooth_off.png",
+                "name": "IMAGE_BLUETOOTH_OFF",
+                "type": "png"
+            },
+            {
+                "file": "images/charging.png",
+                "name": "IMAGE_CHARGING",
+                "type": "png"
             }
         ]
     },
     "sdkVersion": "2",
-    "shortName": "FuzzyTime",
-    "uuid": "52ddf87e-6c31-4f30-90bc-6a13434e6ce5",
+    "shortName": "FuzzyTime Black",
+    "uuid": "ebfdc529-cc04-4120-8d60-212988e99a14",
     "versionCode": 1,
     "versionLabel": "1.4",
     "watchapp": {

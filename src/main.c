@@ -195,6 +195,11 @@ static void bt_handler(bool connected) {
 }
 
 static void main_window_load(Window *window) {
+  // UUID : ebfdc529-cc04-4120-8d60-212988e99a14
+  
+  // background color
+  window_set_background_color(window, GColorBlack);
+  
   // Load GFont
   s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_36));
   s_time_font_big = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DOMESTIC_BOLD_SUBSET_48));
@@ -204,6 +209,7 @@ static void main_window_load(Window *window) {
   // line1
   line1.layer[0] = text_layer_create(GRect(0, line1_y, 144, 60));
   text_layer_set_background_color(line1.layer[0], GColorClear);
+  text_layer_set_text_color(line1.layer[0], GColorWhite);
 //  text_layer_set_font(line1.layer[0], fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_font(line1.layer[0], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[0], GTextAlignmentLeft);
@@ -211,6 +217,7 @@ static void main_window_load(Window *window) {
 
   line1.layer[1] = text_layer_create(GRect(144, line1_y, 144, 60));
   text_layer_set_background_color(line1.layer[1], GColorClear);
+  text_layer_set_text_color(line1.layer[1], GColorWhite);
   text_layer_set_font(line1.layer[1], s_time_font_big);
   text_layer_set_text_alignment(line1.layer[1], GTextAlignmentLeft);
 //  text_layer_set_overflow_mode (line1.layer[1], GTextOverflowModeWordWrap);
@@ -222,12 +229,14 @@ static void main_window_load(Window *window) {
   // line2
   line2.layer[0] = text_layer_create(GRect(0, line2_y, 144, 50));
   text_layer_set_background_color(line2.layer[0], GColorClear);
+  text_layer_set_text_color(line2.layer[0], GColorWhite);
   text_layer_set_font(line2.layer[0], s_time_font);
   text_layer_set_text_alignment(line2.layer[0], GTextAlignmentLeft);
 //  text_layer_set_overflow_mode (line2.layer[0], GTextOverflowModeWordWrap);
 
   line2.layer[1] = text_layer_create(GRect(-144, line2_y, 144, 50));
   text_layer_set_background_color(line2.layer[1], GColorClear);
+  text_layer_set_text_color(line2.layer[1], GColorWhite);
   text_layer_set_font(line2.layer[1], s_time_font);
   text_layer_set_text_alignment(line2.layer[1], GTextAlignmentLeft);
 //  text_layer_set_overflow_mode (line2.layer[1], GTextOverflowModeWordWrap);
@@ -239,12 +248,14 @@ static void main_window_load(Window *window) {
   // line3
   line3.layer[0] = text_layer_create(GRect(0, line3_y, 144, 50));
   text_layer_set_background_color(line3.layer[0], GColorClear);
+  text_layer_set_text_color(line3.layer[0], GColorWhite);
   text_layer_set_font(line3.layer[0], s_time_font);
   text_layer_set_text_alignment(line3.layer[0], GTextAlignmentLeft);
 //  text_layer_set_overflow_mode (line3.layer[0], GTextOverflowModeWordWrap);
 
   line3.layer[1] = text_layer_create(GRect(144, line3_y, 144, 50));
   text_layer_set_background_color(line3.layer[1], GColorClear);
+  text_layer_set_text_color(line3.layer[1], GColorWhite);
   text_layer_set_font(line3.layer[1], s_time_font);
   text_layer_set_text_alignment(line3.layer[1], GTextAlignmentLeft);
 //  text_layer_set_overflow_mode (line3.layer[1], GTextOverflowModeWordWrap);
@@ -256,19 +267,22 @@ static void main_window_load(Window *window) {
   // battery text
   batterylayer = text_layer_create(GRect(0, 0, 30, 18));
   text_layer_set_background_color(batterylayer, GColorClear);
+  text_layer_set_text_color(batterylayer, GColorWhite);
   text_layer_set_font(batterylayer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(batterylayer, GTextAlignmentRight);
 
   // Create charging GBitmap, then set to created BitmapLayer
   s_bitmap_charging = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
   s_ch_bitmap_layer = bitmap_layer_create(GRect(32, 0, 20, 18));
+//  bitmap_layer_set_background_color(s_ch_bitmap_layer, GColorWhite);
+  bitmap_layer_set_compositing_mode(s_ch_bitmap_layer, GCompOpAssignInverted);
   bitmap_layer_set_alignment(s_ch_bitmap_layer, GAlignLeft);
   layer_set_hidden ((Layer *)s_ch_bitmap_layer, true);
   bitmap_layer_set_bitmap(s_ch_bitmap_layer, s_bitmap_charging);
   
   // bottom text
   bottomlayer = text_layer_create(GRect(0, 150, 144, 18));
-//  text_layer_set_text_color(bottomlayer], GColorWhite);
+  text_layer_set_text_color(bottomlayer, GColorWhite);
   text_layer_set_background_color(bottomlayer, GColorClear);
   text_layer_set_font(bottomlayer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(bottomlayer, GTextAlignmentCenter);
@@ -278,7 +292,7 @@ static void main_window_load(Window *window) {
   s_bitmap_bt_off = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_OFF);
   s_bt_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 22));
 //  bitmap_layer_set_background_color(s_bt_bitmap_layer, GColorWhite);
-//  bitmap_layer_set_compositing_mode(s_bt_bitmap_layer, GCompOpAssign);
+  bitmap_layer_set_compositing_mode(s_bt_bitmap_layer, GCompOpAssignInverted);
   bitmap_layer_set_alignment(s_bt_bitmap_layer, GAlignRight);
     
   // Ensures time is displayed immediately (will break if NULL tick event accessed).

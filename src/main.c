@@ -276,7 +276,7 @@ static void main_window_load(Window *window) {
   // Create GBitmap, then set to created BitmapLayer
   s_bitmap_bt_on = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_ON);
   s_bitmap_bt_off = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH_OFF);
-  s_bt_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 18));
+  s_bt_bitmap_layer = bitmap_layer_create(GRect(100, 0, 40, 22));
 //  bitmap_layer_set_background_color(s_bt_bitmap_layer, GColorWhite);
 //  bitmap_layer_set_compositing_mode(s_bt_bitmap_layer, GCompOpAssign);
   bitmap_layer_set_alignment(s_bt_bitmap_layer, GAlignRight);
